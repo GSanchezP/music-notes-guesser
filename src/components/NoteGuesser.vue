@@ -65,7 +65,7 @@ const NOTE_SPANISH = { C: 'Do', D: 'Re', E: 'Mi', F: 'Fa', G: 'Sol', A: 'La', B:
 const availableOctaves = [2, 3, 4, 5]
 const REPEAT_INTERVAL = 2000 // ms between each play
 
-const selectedOctaves = ref([3, 4]) // Default: octaves 3 and 4
+const selectedOctaves = ref([4]) // Default: octave 4
 const currentNote = ref(null)
 const currentOctave = ref(null)
 const lastGuess = ref(null)
@@ -168,21 +168,43 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
-  padding: 2rem;
+  gap: 1.25rem;
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .note-guesser {
+    gap: 2rem;
+    padding: 2rem;
+  }
 }
 
 .octave-selector {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
   justify-content: center;
 }
 
+@media (min-width: 640px) {
+  .octave-selector {
+    gap: 0.75rem;
+  }
+}
+
 .octave-label {
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   color: #94a3b8;
+  width: 100%;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .octave-label {
+    width: auto;
+    font-size: 0.9rem;
+  }
 }
 
 .octave-option {
@@ -193,11 +215,14 @@ onUnmounted(() => {
   font-weight: 600;
   color: #e2e8f0;
   cursor: pointer;
-  padding: 0.4rem 0.75rem;
+  padding: 0.5rem 0.875rem;
+  min-height: 44px;
   background: #16213e;
   border: 2px solid #0f3460;
   border-radius: 8px;
   transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .octave-option:has(input:checked) {
@@ -208,6 +233,8 @@ onUnmounted(() => {
 .octave-option input {
   cursor: pointer;
   accent-color: #e94560;
+  min-width: 20px;
+  min-height: 20px;
 }
 
 .octave-option input:disabled {
@@ -217,11 +244,14 @@ onUnmounted(() => {
 
 .controls {
   margin-bottom: 0.5rem;
+  width: 100%;
 }
 
 .play-btn {
-  padding: 1rem 2rem;
-  font-size: 1.25rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  min-height: 48px;
+  font-size: 1.125rem;
   font-weight: 600;
   font-family: inherit;
   background: linear-gradient(135deg, #e94560 0%, #c73e54 100%);
@@ -231,6 +261,16 @@ onUnmounted(() => {
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
   box-shadow: 0 4px 20px rgba(233, 69, 96, 0.4);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@media (min-width: 640px) {
+  .play-btn {
+    width: auto;
+    padding: 1rem 2rem;
+    font-size: 1.25rem;
+  }
 }
 
 .play-btn:hover:not(:disabled) {
@@ -245,13 +285,19 @@ onUnmounted(() => {
 
 .feedback {
   text-align: center;
-  min-height: 4rem;
+  min-height: 3.5rem;
 }
 
 .feedback-message {
-  font-size: 1.5rem;
+  font-size: 1.375rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .feedback-message {
+    font-size: 1.5rem;
+  }
 }
 
 .feedback-message.correct {
@@ -264,15 +310,32 @@ onUnmounted(() => {
 
 .feedback-detail {
   color: #94a3b8;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   margin: 0;
 }
 
+@media (min-width: 640px) {
+  .feedback-detail {
+    font-size: 1rem;
+  }
+}
+
 .note-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 280px;
+}
+
+@media (min-width: 640px) {
+  .note-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    max-width: none;
+    justify-content: center;
+  }
 }
 
 .note-btn {
@@ -280,9 +343,10 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
-  width: 4rem;
-  height: 4.5rem;
+  gap: 0.1rem;
+  min-width: 0;
+  min-height: 52px;
+  aspect-ratio: 1;
   font-family: inherit;
   background: #16213e;
   color: #e2e8f0;
@@ -290,17 +354,40 @@ onUnmounted(() => {
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@media (min-width: 640px) {
+  .note-btn {
+    width: 4rem;
+    height: 4.5rem;
+    min-height: 4.5rem;
+    aspect-ratio: auto;
+  }
 }
 
 .note-btn .note-letter {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 700;
 }
 
+@media (min-width: 640px) {
+  .note-btn .note-letter {
+    font-size: 1.25rem;
+  }
+}
+
 .note-btn .note-spanish {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 500;
   opacity: 0.9;
+}
+
+@media (min-width: 640px) {
+  .note-btn .note-spanish {
+    font-size: 0.75rem;
+  }
 }
 
 .note-btn:hover:not(:disabled) {
@@ -310,6 +397,14 @@ onUnmounted(() => {
   transform: scale(1.05);
 }
 
+@media (hover: none) {
+  .note-btn:active:not(:disabled) {
+    background: #0f3460;
+    border-color: #e94560;
+    color: white;
+  }
+}
+
 .note-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -317,8 +412,14 @@ onUnmounted(() => {
 
 .hint {
   color: #64748b;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   margin: 0;
+}
+
+@media (min-width: 640px) {
+  .hint {
+    font-size: 0.9rem;
+  }
 }
 
 .hint.muted {
