@@ -17,6 +17,19 @@
       </label>
     </div>
 
+    <div class="instrument-selector">
+      <span class="instrument-label">Instrument:</span>
+      <select v-model="selectedInstrument" class="instrument-select">
+        <option
+          v-for="inst in instruments"
+          :key="inst.id"
+          :value="inst.id"
+        >
+          {{ inst.name }}
+        </option>
+      </select>
+    </div>
+
     <div class="controls">
       <button
         class="play-btn"
@@ -65,7 +78,15 @@ const NOTE_SPANISH = { C: 'Do', D: 'Re', E: 'Mi', F: 'Fa', G: 'Sol', A: 'La', B:
 const availableOctaves = [2, 3, 4, 5]
 const REPEAT_INTERVAL = 2000 // ms between each play
 
+const instruments = [
+  { id: 'sine', name: 'Pure tone' },
+  { id: 'flute', name: 'Flute' },
+  { id: 'piano', name: 'Piano' },
+  { id: 'guitar', name: 'Guitar' },
+]
+
 const selectedOctaves = ref([4]) // Default: octave 4
+const selectedInstrument = ref('sine')
 const currentNote = ref(null)
 const currentOctave = ref(null)
 const lastGuess = ref(null)
@@ -74,6 +95,14 @@ const correctNote = ref('')
 const correctOctave = ref('')
 const isPlaying = ref(false)
 let repeatIntervalId = null
+let audioContext = null
+
+function getAudioContext() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)()
+  }
+  return audioContext
+}
 
 // MIDI note to frequency: f = 440 * 2^((n-69)/12)
 // Note offsets from C: C=0, D=2, E=4, F=5, G=7, A=9, B=11
@@ -85,20 +114,100 @@ function getFrequency(note, octave) {
 }
 
 function playTone(frequency, duration = REPEAT_INTERVAL) {
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-  const oscillator = audioContext.createOscillator()
-  const gainNode = audioContext.createGain()
+  const ctx = getAudioContext()
+  const now = ctx.currentTime
+  const instrument = selectedInstrument.value
 
-  oscillator.connect(gainNode)
-  gainNode.connect(audioContext.destination)
+  if (instrument === 'sine') {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.value = frequency
+    osc.type = 'sine'
+    gain.gain.setValueAtTime(0.3, now)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration / 1000)
+    osc.start(now)
+    osc.stop(now + duration / 1000)
+    return
+  }
 
-  oscillator.frequency.value = frequency
-  oscillator.type = 'sine'
-  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
-  gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration / 1000)
+  if (instrument === 'flute') {
+    const osc1 = ctx.createOscillator()
+    const osc2 = ctx.createOscillator()
+    const osc2Gain = ctx.createGain()
+    const masterGain = ctx.createGain()
+    osc1.connect(masterGain)
+    osc2.connect(osc2Gain)
+    osc2Gain.connect(masterGain)
+    masterGain.connect(ctx.destination)
+    osc1.type = 'sine'
+    osc2.type = 'sine'
+    osc1.frequency.value = frequency
+    osc2.frequency.value = frequency * 2
+    osc2Gain.gain.setValueAtTime(0.08, now)
+    masterGain.gain.setValueAtTime(0, now)
+    masterGain.gain.linearRampToValueAtTime(0.25, now + 0.02)
+    masterGain.gain.setValueAtTime(0.2, now + 0.05)
+    masterGain.gain.exponentialRampToValueAtTime(0.001, now + duration / 1000)
+    osc1.start(now)
+    osc2.start(now)
+    osc1.stop(now + duration / 1000)
+    osc2.stop(now + duration / 1000)
+    return
+  }
 
-  oscillator.start(audioContext.currentTime)
-  oscillator.stop(audioContext.currentTime + duration / 1000)
+  if (instrument === 'piano') {
+    const harmonics = [
+      { freq: 1, gain: 1 },
+      { freq: 2, gain: 0.4 },
+      { freq: 3, gain: 0.2 },
+      { freq: 4, gain: 0.1 },
+    ]
+    const masterGain = ctx.createGain()
+    masterGain.connect(ctx.destination)
+    masterGain.gain.setValueAtTime(0, now)
+    masterGain.gain.linearRampToValueAtTime(0.4, now + 0.005)
+    masterGain.gain.exponentialRampToValueAtTime(0.001, now + Math.min(duration / 1000, 0.8))
+    harmonics.forEach(({ freq, gain: hGain }) => {
+      const osc = ctx.createOscillator()
+      const oscGain = ctx.createGain()
+      osc.connect(oscGain)
+      oscGain.connect(masterGain)
+      osc.type = 'sine'
+      osc.frequency.value = frequency * freq
+      oscGain.gain.setValueAtTime(hGain, now)
+      osc.start(now)
+      osc.stop(now + duration / 1000)
+    })
+    return
+  }
+
+  if (instrument === 'guitar') {
+    const harmonics = [
+      { freq: 1, gain: 1 },
+      { freq: 2, gain: 0.35 },
+      { freq: 2.5, gain: 0.15 },
+      { freq: 3, gain: 0.08 },
+    ]
+    const masterGain = ctx.createGain()
+    masterGain.connect(ctx.destination)
+    masterGain.gain.setValueAtTime(0, now)
+    masterGain.gain.linearRampToValueAtTime(0.35, now + 0.003)
+    masterGain.gain.exponentialRampToValueAtTime(0.001, now + Math.min(duration / 1000, 0.6))
+    harmonics.forEach(({ freq, gain: hGain }) => {
+      const osc = ctx.createOscillator()
+      const oscGain = ctx.createGain()
+      osc.connect(oscGain)
+      oscGain.connect(masterGain)
+      osc.type = 'triangle'
+      osc.frequency.value = frequency * freq
+      oscGain.gain.setValueAtTime(hGain, now)
+      osc.start(now)
+      osc.stop(now + duration / 1000)
+    })
+    return
+  }
 }
 
 function pickRandomNote() {
@@ -240,6 +349,39 @@ onUnmounted(() => {
 .octave-option input:disabled {
   cursor: not-allowed;
   opacity: 0.7;
+}
+
+.instrument-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.instrument-label {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.instrument-select {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.5rem 0.875rem;
+  min-height: 44px;
+  background: #16213e;
+  color: #e2e8f0;
+  border: 2px solid #0f3460;
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.instrument-select:focus {
+  outline: none;
+  border-color: #e94560;
 }
 
 .controls {
